@@ -37,7 +37,7 @@ def extract_intervals(gpx_file, interval_distance_threshold):
             interval_data['end_time'] = point2.find('{http://www.topografix.com/GPX/1/1}time').text
             interval_data['total_time'] = (datetime.strptime(interval_data['end_time'], '%Y-%m-%dT%H:%M:%SZ') -
                                             datetime.strptime(interval_data['start_time'], '%Y-%m-%dT%H:%M:%SZ')).total_seconds()
-            interval_data['distance'] = round(total_distance, 2)
+            interval_data['distance'] = round(total_distance, 0)
             interval_data['max_heart_rate'] = extract_max_heart_rate(point2)
             interval_data['avg_speed'] = extract_avg_speed(point1)
             intervals.append(interval_data)
@@ -55,7 +55,7 @@ def extract_intervals(gpx_file, interval_distance_threshold):
             interval_data['end_time'] = point2.find('{http://www.topografix.com/GPX/1/1}time').text
             interval_data['total_time'] = (datetime.strptime(interval_data['end_time'], '%Y-%m-%dT%H:%M:%SZ') -
                                             datetime.strptime(interval_data['start_time'], '%Y-%m-%dT%H:%M:%SZ')).total_seconds()
-            interval_data['distance'] = round(total_distance, 2)
+            interval_data['distance'] = round(total_distance, 0)
             interval_data['max_heart_rate'] = extract_max_heart_rate(point2)
             interval_data['avg_speed'] = extract_avg_speed(point2)
             intervals.append(interval_data)
@@ -81,7 +81,13 @@ def extract_avg_speed(spd):
         return float(avg_speed.text)
     else: 
         return 0
+    
+def convert_time(time):
+    time_minutes = time // 60
+    time_sec = time % 60
 
+    return(f"{int(time_minutes):02}'{int(time_sec):02}")
+    
 def write_intervals_csv(intervals, csv_file):
     with open(csv_file, 'w', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=['Interval' , 'Action', 'Start Time', 'End Time', 'Total Time (s)', 'Distance (m)', 'Max Heart Rate (bpm)', 'Pace'])
@@ -91,7 +97,7 @@ def write_intervals_csv(intervals, csv_file):
                              'Action': interval['action'],
                              'Start Time': interval['start_time'],
                              'End Time': interval['end_time'],
-                             'Total Time (s)': interval['total_time'],
+                             'Total Time (s)': convert_time(interval['total_time']),
                              'Distance (m)': interval['distance'],
                              'Max Heart Rate (bpm)': interval['max_heart_rate'],
                              'Pace' : interval['avg_speed']})
