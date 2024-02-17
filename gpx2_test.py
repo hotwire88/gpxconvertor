@@ -2,6 +2,8 @@ import csv
 import xml.etree.ElementTree as ET
 from geopy.distance import geodesic
 from datetime import datetime
+import tkinter as tk
+from tkinter import filedialog
 
 def extract_intervals(gpx_file, interval_distance_threshold):
     tree = ET.parse(gpx_file)
@@ -19,7 +21,6 @@ def extract_intervals(gpx_file, interval_distance_threshold):
     interval_count = 1
     interval_start_point = None
     total_distance = 0
-    #warmup_distance = 1
     for i in range(1, len(track_points)):
         point1 = track_points[i - 1]
         point2 = track_points[i]
@@ -39,7 +40,7 @@ def extract_intervals(gpx_file, interval_distance_threshold):
                                             datetime.strptime(interval_data['start_time'], '%Y-%m-%dT%H:%M:%SZ')).total_seconds()
             interval_data['distance'] = round(total_distance, 0)
             interval_data['max_heart_rate'] = extract_max_heart_rate(point2)
-            interval_data['avg_speed'] = extract_avg_speed(point1)
+            interval_data['pace'] = extract_avg_speed(interval_data['total_time'], interval_data['distance'])
             intervals.append(interval_data)
             total_distance = 0
             interval_count += 1
@@ -57,7 +58,7 @@ def extract_intervals(gpx_file, interval_distance_threshold):
                                             datetime.strptime(interval_data['start_time'], '%Y-%m-%dT%H:%M:%SZ')).total_seconds()
             interval_data['distance'] = round(total_distance, 0)
             interval_data['max_heart_rate'] = extract_max_heart_rate(point2)
-            interval_data['avg_speed'] = extract_avg_speed(point2)
+            interval_data['pace'] = extract_avg_speed(interval_data['total_time'], interval_data['distance'])
             intervals.append(interval_data)
             total_distance = 0
             interval_count += 1
@@ -73,12 +74,13 @@ def extract_max_heart_rate(point):
     else:
         return 0  # If heart rate data is not available, return 0 or any other default value
     
-def extract_avg_speed(spd):
-    avg_speed = spd.find('{http://www.topografix.com/GPX/1/1}extensions/{http://www.garmin.com/xmlschemas/TrackPointExtension/v1}TrackPointExtension/'
-                         '{http://www.garmin.com/xmlschemas/TrackPointExtension/v1}speed')
-    
-    if avg_speed is not None:
-        return float(avg_speed.text)
+def extract_avg_speed(time, dist): 
+
+    dist /= 1000
+    avg_pace = time / dist
+
+    if avg_pace is not None:
+        return convert_time(avg_pace)
     else: 
         return 0
     
@@ -90,7 +92,7 @@ def convert_time(time):
     
 def write_intervals_csv(intervals, csv_file):
     with open(csv_file, 'w', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=['Interval' , 'Action', 'Start Time', 'End Time', 'Total Time (s)', 'Distance (m)', 'Max Heart Rate (bpm)', 'Pace'])
+        writer = csv.DictWriter(f, fieldnames=['Interval' , 'Action', 'Start Time', 'End Time', 'Total Time (s)', 'Distance (m)', 'Max Heart Rate (bpm)', 'Pace(min/km)'])
         writer.writeheader()
         for i, interval in enumerate(intervals, start=1):
             writer.writerow({'Interval': i,
@@ -100,7 +102,7 @@ def write_intervals_csv(intervals, csv_file):
                              'Total Time (s)': convert_time(interval['total_time']),
                              'Distance (m)': interval['distance'],
                              'Max Heart Rate (bpm)': interval['max_heart_rate'],
-                             'Pace' : interval['avg_speed']})
+                             'Pace(min/km)' : interval['pace']})
 
 if __name__ == "__main__":
     gpx_file = 'input.gpx'
