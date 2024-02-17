@@ -89,6 +89,13 @@ def convert_time(time):
     time_sec = time % 60
 
     return(f"{int(time_minutes):02}'{int(time_sec):02}")
+
+def select_file():
+    root = tk.Tk()
+    root.withdraw()  # Hide the main window
+    file_path = filedialog.askopenfilename(filetypes=[("GPX files", "*.gpx")])
+    return file_path
+
     
 def write_intervals_csv(intervals, csv_file):
     with open(csv_file, 'w', newline='') as f:
@@ -105,12 +112,10 @@ def write_intervals_csv(intervals, csv_file):
                              'Pace(min/km)' : interval['pace']})
 
 if __name__ == "__main__":
-    gpx_file = 'input.gpx'
-    csv_file = 'interval_data.csv'
+    gpx_file = select_file()
+    csv_file = input("Enter output filename: ") + ".csv"
     warmup_distance_treshold = input("Enter warm-up distance in Meters: ")
     interval_distance_threshold = input("Enter training distance in Meters: ")
-    #warmup_distance_treshold = 340 # Example threshold 340 meter
-    #interval_distance_threshold = 400  # Example threshold: 1000 meters
     intervals = extract_intervals(gpx_file, interval_distance_threshold)
     write_intervals_csv(intervals, csv_file)
     print(f"Interval data extracted and saved to {csv_file}")
