@@ -31,7 +31,7 @@ def extract_intervals(gpx_file, interval_distance_threshold):
         if interval_start_point is None:
             interval_start_point = point1
 
-        elif total_distance >= int(warmup_distance_treshold) and interval_count == 1:
+        elif interval_count == 1 and total_distance >= int(warmup_distance_treshold):
             interval_data = {}
             interval_data['action'] = 'Warm-up'
             interval_data['start_time'] = interval_start_point.find('{http://www.topografix.com/GPX/1/1}time').text
@@ -45,8 +45,9 @@ def extract_intervals(gpx_file, interval_distance_threshold):
             total_distance = 0
             interval_count += 1
             interval_start_point = None
+            print('Warm UP')
              
-        elif total_distance >= int(interval_distance_threshold):
+        elif interval_count > 1 and total_distance >= int(interval_distance_threshold):
             interval_data = {}
             if interval_count % 2 == 0:
               interval_data['action'] = 'Training'
@@ -67,14 +68,16 @@ def extract_intervals(gpx_file, interval_distance_threshold):
     return intervals
 
 def extract_max_heart_rate(point):
+
     heart_rate = point.find('{http://www.topografix.com/GPX/1/1}extensions/{http://www.garmin.com/xmlschemas/TrackPointExtension/v1}TrackPointExtension/'
                             '{http://www.garmin.com/xmlschemas/TrackPointExtension/v1}hr')
     if heart_rate is not None:
         return int(heart_rate.text)
     else:
         return 0  # If heart rate data is not available, return 0 or any other default value
-    
-def extract_avg_speed(time, dist): 
+
+def extract_avg_speed(time, dist):
+
 
     dist /= 1000
     avg_pace = time / dist
@@ -96,7 +99,7 @@ def select_file():
     file_path = filedialog.askopenfilename(filetypes=[("GPX files", "*.gpx")])
     return file_path
 
-    
+
 def write_intervals_csv(intervals, csv_file):
     with open(csv_file, 'w', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=['Interval' , 'Action', 'Start Time', 'End Time', 'Total Time (s)', 'Distance (m)', 'Max Heart Rate (bpm)', 'Pace(min/km)'])
